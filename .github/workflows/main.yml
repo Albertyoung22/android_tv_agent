@@ -9,10 +9,14 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+    - uses: android-actions/setup-android@v3
     - uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: '7.6.4'
-    - run: echo "sdk.dir=$ANDROID_HOME" > local.properties && yes | sdkmanager --licenses && gradle assembleDebug
+    - run: |
+        sed -i 's/@mipmap\/ic_launcher/@android:drawable\/sym_def_app_icon/g' app/src/main/AndroidManifest.xml
+        sed -i 's/@mipmap\/ic_launcher_round/@android:drawable\/sym_def_app_icon/g' app/src/main/AndroidManifest.xml
+        gradle assembleDebug --stacktrace
     - uses: actions/upload-artifact@v4
       with:
         name: MbcastTvAgent-APK
