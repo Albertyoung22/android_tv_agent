@@ -1,0 +1,47 @@
+name: Build Android TV APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 檢出專案代碼
+      uses: actions/checkout@v4
+
+    - name: 安裝 Java 11
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    - name: 設定 Gradle
+      uses: gradle/actions/setup-gradle@v3
+
+    - name: 自動編譯 APK
+      run: |
+        if [ -f "build.gradle" ]; then
+          TARGET_DIR="."
+        elif [ -f "android_tv_agent/build.gradle" ]; then
+          TARGET_DIR="android_tv_agent"
+        else
+          TARGET_DIR=$(find . -name "settings.gradle" -exec dirname {} \;)
+        fi
+        echo "Building in $TARGET_DIR"
+        cd "$TARGET_DIR"
+        
+        if [ ! -f "gradlew" ]; then
+          gradle wrapper
+        fi
+        chmod +x gradlew
+        ./gradlew assembleDebug --stacktrace
+
+    - name: 上傳編譯完成的 APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: MbcastTvAgent-APK
+        path: "**/build/outputs/apk/debug/*.apk"
