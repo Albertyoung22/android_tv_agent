@@ -22,21 +22,24 @@ jobs:
     - name: 設定 Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: 自動編譯 APK
+    - name: 授權與安裝 Android SDK 33
       run: |
-        if [ -f "build.gradle" ]; then
-          TARGET_DIR="."
-        elif [ -f "android_tv_agent/build.gradle" ]; then
-          TARGET_DIR="android_tv_agent"
-        else
-          TARGET_DIR="."
-        fi
-        cd "$TARGET_DIR"
-        chmod +x gradlew || true
-        ./gradlew assembleDebug --stacktrace || gradle assembleDebug --stacktrace
+        yes | sdkmanager --licenses || true
+        sdkmanager "platforms;android-33" "build-tools;33.0.2"
 
-    - name: 上傳編譯完成的 APK
+    - name: 安裝 Gradle 7.6.4
+      run: |
+        wget -q https://services.gradle.org/distributions/gradle-7.6.4-bin.zip -O /tmp/gradle.zip
+        sudo unzip -q -d /opt/gradle /tmp/gradle.zip
+        echo "/opt/gradle/gradle-7.6.4/bin" >> $GITHUB_PATH
+
+    - name: 編譯 APK
+      run: |
+        gradle assembleDebug --stacktrace
+
+    - name: 上傳 APK 產物
       uses: actions/upload-artifact@v4
       with:
         name: MbcastTvAgent-APK
-        path: "**/build/outputs/apk/debug/*.apk"
+        path: app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 30
